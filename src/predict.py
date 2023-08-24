@@ -115,11 +115,11 @@ model_config = DecisionTransformerConfig(state_dim=state_size+action_time_dim,
                                          data_type=data_type)
 model = WorldModelDecisionTransformerModel(model_config)
 # load model if needed 
-# from pathlib import Path
-# model.eval()
-# world_model_path = str(Path(__file__).parent.absolute() / 'model.pth') # note: 这里需要引入相对路径
-# ckpt = torch.load(world_model_path)
-# model.load_state_dict(ckpt['model_state'])
+from pathlib import Path
+model.eval()
+world_model_path = str(Path(__file__).parent.absolute() / 'model.pth') # note: 这里需要引入相对路径
+ckpt = torch.load(world_model_path)
+model.load_state_dict(ckpt['model_state'])
 
 pos_min_max_dic = {'boom': [-math.pi, math.pi], 'arm': [-math.pi, math.pi],
                         'bucket': [-math.pi, math.pi], 'swing': [-math.pi, math.pi]}
