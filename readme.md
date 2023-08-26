@@ -1,8 +1,13 @@
 # 挖呀挖呀挖
 
-在Jupiter服务器上配置test_environment.txt环境，训练两天半后的结果如下
+在Jupiter服务器上配置test_environment.txt环境，
 
-![image-20230824201721074](C:\Users\y\AppData\Roaming\Typora\typora-user-images\image-20230824201721074.png)
+- world_model_9995.0_00488k.pth
+  - 99.525415
+- world_model_9111.0_00444k.pth
+  - 
+
+
 
 ### 2023.8.24
 
