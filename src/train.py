@@ -104,7 +104,7 @@ class WorldModelDecisionTransformerModel(DecisionTransformerModel):
 
         x = x.reshape(batch_size, seq_length, 2, self.hidden_size).permute(0, 2, 1, 3)
 
-        state_preds = self.predict_state(x[:, 1]) 
+        state_preds = self.predict_state(x[:, 1])
         if self.config.data_type == "delta":
             state_preds = state_preds + states
 
@@ -194,6 +194,12 @@ class DynamicsModel():
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
         return loss
 
+    def joint_dis_ratio_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
+        real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
+        predict_end_location_dis_2norm = torch.norm(real_next_state - real_current_state, dim=-1)
+        loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
+        return loss
+
     def get_current_and_next_states(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
         if self.arg_dict["world_model_loss_scale"] == "last":
@@ -215,8 +221,9 @@ class DynamicsModel():
         return real_current_state, predict_current_state, real_next_state, predict_next_state, mask
 
     def model_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
-        loss = self.joint_dis_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        return loss
+        dis_loss = self.joint_dis_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
+        rat_loss = self.joint_dis_ratio_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
+        return dis_loss + abs(dis_loss-rat_loss)
 
     def model_train(self, real_current_s, real_next_s, prediction_s, attention_mask):
 

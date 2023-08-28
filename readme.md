@@ -5,7 +5,7 @@
 - world_model_9995.0_00488k.pth，99.525415
 - world_model_9111.0_00444k.pth，
 - world_model_11841.0_00578k.pth，
-- world_model_30426.0_01485k.pth，
+- world_model_30426.0_01485k.pth，99.641523
 
 
 
