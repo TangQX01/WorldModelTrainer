@@ -7,6 +7,12 @@
 - world_model_11841.0_00578k.pth，
 - world_model_30426.0_01485k.pth，99.641523
 
+A为第一项，B为第二项，AS(A_state)，AP(A_position)，BS，BP
+
+loss修改为e^(A)+e^(-B):
+
+- 8.29/world_model_2749.0_00134k.pth: 
+
 
 
 ### 2023.8.24
