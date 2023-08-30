@@ -18,11 +18,13 @@ from concurrent.futures import ThreadPoolExecutor
 from transformers import DecisionTransformerConfig, DecisionTransformerModel, DecisionTransformerGPT2Model
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
-from utils import get_env, readParser
+from utils import get_env, readParser, excavator_arm_fk
 
 ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
 accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
 device = accelerator.device
+
+
 
 
 class WorldModelDecisionTransformerModel(DecisionTransformerModel):
@@ -132,6 +134,7 @@ class DynamicsModel():
         random.seed(self.seed)
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
+        self.alpha = 1.0
 
         self.state_size = state_size
         self.action_size = action_size
@@ -188,6 +191,14 @@ class DynamicsModel():
 
         return self.rad_norm(new_states)
 
+    def joint_dis_loss2(self, real_current_s, real_next_s, prediction_s, attention_mask):
+        real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
+        real_next_state = excavator_arm_fk(real_next_state)
+        predict_next_state = excavator_arm_fk(predict_next_state)
+        predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
+        loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
+        return loss
+
     def joint_dis_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
         predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
@@ -196,6 +207,8 @@ class DynamicsModel():
 
     def joint_dis_ratio_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
+        real_next_state = excavator_arm_fk(real_next_state)
+        real_current_state = excavator_arm_fk(real_current_state)
         predict_end_location_dis_2norm = torch.norm(real_next_state - real_current_state, dim=-1)
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
         return loss
@@ -222,8 +235,9 @@ class DynamicsModel():
 
     def model_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         dis_loss = self.joint_dis_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
+        dis_loss_2 = self.joint_dis_loss_2(real_current_s, real_next_s, prediction_s, attention_mask)
         rat_loss = self.joint_dis_ratio_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        return dis_loss + abs(dis_loss-rat_loss)
+        return dis_loss + alpha*dis_loss_2
 
     def model_train(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
