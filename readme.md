@@ -18,7 +18,7 @@ loss修改为AP+10*AP/BP:
 
 妤妃修改的模型：
 
-- world_model_4676.0_00228k.pth
+- world_model_4676.0_00228k.pth： 99.396133
 
 ### 2023.8.24
 
