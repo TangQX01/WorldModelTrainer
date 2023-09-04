@@ -166,11 +166,11 @@ class DynamicsModel():
         self.model = WorldModelDecisionTransformerModel(self.model_config)
         self.model = self.model.to(self.device)
         self.model_optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        self.model_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.model_optimizer, 
-                                                                             T_max=self.arg_dict["world_model_lr_schedule_T_max"], 
+        self.model_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.model_optimizer,
+                                                                             T_max=self.arg_dict["world_model_lr_schedule_T_max"],
                                                                              eta_min=1e-6)
-        self.model, self.model_optimizer, self.model_lr_scheduler = accelerator.prepare(self.model, 
-                                                                                        self.model_optimizer, 
+        self.model, self.model_optimizer, self.model_lr_scheduler = accelerator.prepare(self.model,
+                                                                                        self.model_optimizer,
                                                                                         self.model_lr_scheduler)
 
 
@@ -201,9 +201,9 @@ class DynamicsModel():
 
     def joint_dis_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
-        real_next_state = excavator_arm_fk(real_next_state)
+        # real_next_state = excavator_arm_fk(real_next_state)
         # predict_next_state = excavator_arm_fk(predict_next_state)
-        # predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
+        predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
         return loss
         # return torch.exp(loss)
@@ -214,7 +214,7 @@ class DynamicsModel():
         real_current_state = excavator_arm_fk(real_current_state)
         predict_end_location_dis_2norm = torch.norm(real_next_state - real_current_state, dim=-1)
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
-        return toch.exp(-loss)
+        return torch.exp(-loss)
 
     def get_current_and_next_states(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
@@ -238,9 +238,9 @@ class DynamicsModel():
 
     def model_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         dis_loss = self.joint_dis_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        dis_loss_2 = self.joint_dis_loss_2(real_current_s, real_next_s, prediction_s, attention_mask)
+        dis_loss2 = self.joint_dis_loss2(real_current_s, real_next_s, prediction_s, attention_mask)
         # rat_loss = self.joint_dis_ratio_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        return dis_loss + self.alpha*dis_loss_2
+        return dis_loss + self.alpha*dis_loss2
 
     def model_train(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
@@ -351,7 +351,7 @@ class DynamicsModel():
                         test_loss = accelerator.gather_for_metrics(test_loss)
                         test_prediction_s = accelerator.gather_for_metrics(test_prediction_s)
                         if accelerator.is_main_process:
-                            epoch_log_dict = self.updata_log_dict(epoch_log_dict, 
+                            epoch_log_dict = self.updata_log_dict(epoch_log_dict,
                                                                   {"test_total_loss": np.mean(test_loss.detach().cpu().numpy())})
                             test_cost_samples += (batch_size * accelerator.num_processes)
                             log_str = self.log2str(epoch_log_dict, mode="test")
