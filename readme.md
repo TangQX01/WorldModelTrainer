@@ -28,7 +28,7 @@ loss修改为AP+10*AP/BP:
 
 - world_model_32835.0_01603k.pth， 提交时间：2023-09-02 22:55:48，99.570749
 - world_model_44295.0_02162k.pth，
-- world_model_44335.0_02164k.pth
+- world_model_44335.0_02164k.pth，提交时间：
 
 ### 2023.8.24
 
