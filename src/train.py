@@ -201,9 +201,11 @@ class DynamicsModel():
 
     def joint_dis_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
+        real_next_state = excavator_arm_fk(real_next_state)
+        predict_next_state = excavator_arm_fk(predict_next_state)
         predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
-        return loss
+        return torch.exp(loss)
 
     def joint_dis_ratio_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         real_current_state, predict_current_state, real_next_state, predict_next_state, mask = self.get_current_and_next_states(real_current_s, real_next_s, prediction_s, attention_mask)
@@ -211,7 +213,7 @@ class DynamicsModel():
         real_current_state = excavator_arm_fk(real_current_state)
         predict_end_location_dis_2norm = torch.norm(real_next_state - real_current_state, dim=-1)
         loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
-        return loss
+        return toch.exp(-loss)
 
     def get_current_and_next_states(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
@@ -235,9 +237,9 @@ class DynamicsModel():
 
     def model_loss(self, real_current_s, real_next_s, prediction_s, attention_mask):
         dis_loss = self.joint_dis_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        dis_loss_2 = self.joint_dis_loss_2(real_current_s, real_next_s, prediction_s, attention_mask)
+        # dis_loss_2 = self.joint_dis_loss_2(real_current_s, real_next_s, prediction_s, attention_mask)
         rat_loss = self.joint_dis_ratio_loss(real_current_s, real_next_s,  prediction_s, attention_mask)
-        return dis_loss + alpha*dis_loss_2
+        return dis_loss + rat_loss
 
     def model_train(self, real_current_s, real_next_s, prediction_s, attention_mask):
 
